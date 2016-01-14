@@ -1,8 +1,6 @@
 package com.gradleware.tooling.toolingmodel.substitution.internal;
 
 import com.gradleware.tooling.toolingmodel.substitution.deduper.EclipseProjectDeduper;
-import org.gradle.api.Transformer;
-import org.gradle.api.specs.Spec;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.event.ListenerNotificationException;
 import org.gradle.tooling.*;
@@ -20,14 +18,9 @@ import org.gradle.tooling.internal.protocol.ResultHandlerVersion1;
 import org.gradle.tooling.internal.protocol.exceptions.InternalUnsupportedBuildArgumentException;
 import org.gradle.tooling.internal.protocol.test.InternalTestExecutionException;
 import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.ExternalDependency;
 import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.eclipse.EclipseProject;
-import org.gradle.tooling.model.eclipse.EclipseProjectDependency;
-import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject;
 import org.gradle.tooling.model.internal.Exceptions;
-import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
-import org.gradle.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -37,6 +30,7 @@ public class EclipseWorkspaceModelBuilder<T> extends AbstractLongRunningOperatio
     private final Class<T> modelType;
     private final AsyncConsumerActionExecutor connection;
     private final Set<ProjectConnection> participants;
+    private final ModuleToProjectSubstitutor moduleToProjectSubstitutor = new ModuleToProjectSubstitutor();
 
     public EclipseWorkspaceModelBuilder(Class<T> modelType, AsyncConsumerActionExecutor connection, ConnectionParameters parameters, Set<ProjectConnection> participants) {
         super(parameters);
@@ -83,7 +77,7 @@ public class EclipseWorkspaceModelBuilder<T> extends AbstractLongRunningOperatio
             }
             public T run(ConsumerConnection connection) {
                 Set<EclipseProject> openProjects = deduplicate(populateModel());
-                return (T) new DefaultEclipseWorkspace(new ModuleToProjectSubstitutor().substitute(openProjects));
+                return (T) new DefaultEclipseWorkspace(moduleToProjectSubstitutor.substitute(openProjects));
             }
         }, new DefaultResultHandler<T>(handler));
     }

@@ -76,6 +76,7 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         eclipseWorkspace.openProjects.size() == 1
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'project-1')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
 
         cleanup:
         project1Connection?.close()
@@ -98,8 +99,10 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         eclipseWorkspace.openProjects.size() == 2
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'project-1')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
         EclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'project-2')
         assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'log4j', name: 'log4j', version: '1.2.17'))
+        assertNoProjectDependencies(eclipseProject2)
 
         cleanup:
         project1Connection?.close()
@@ -123,8 +126,10 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         assertProjectInWorkspace(eclipseWorkspace, 'multi-project-1')
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'sub-1')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
         EclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'sub-2')
         assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'log4j', name: 'log4j', version: '1.2.17'))
+        assertNoProjectDependencies(eclipseProject2)
 
         cleanup:
         project1Connection?.close()
@@ -149,8 +154,10 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         assertProjectInWorkspace(eclipseWorkspace, 'multi-project')
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'sub')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
         EclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'sub-sub')
         assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'log4j', name: 'log4j', version: '1.2.17'))
+        assertNoProjectDependencies(eclipseProject2)
 
         cleanup:
         project1Connection?.close()
@@ -179,12 +186,16 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         assertProjectInWorkspace(eclipseWorkspace, 'multi-project-1')
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'sub-1')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
         EclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'sub-2')
         assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'log4j', name: 'log4j', version: '1.2.17'))
+        assertNoProjectDependencies(eclipseProject2)
         EclipseProject eclipseProject3 = assertProjectInWorkspace(eclipseWorkspace, 'sub-sub-1')
         assertExternalDependencies(eclipseProject3, new ExternalDependency(group: 'commons-math', name: 'commons-math', version: '1.2'))
+        assertNoProjectDependencies(eclipseProject3)
         EclipseProject eclipseProject4 = assertProjectInWorkspace(eclipseWorkspace, 'sub-sub-2')
         assertExternalDependencies(eclipseProject4, new ExternalDependency(group: 'commons-codec', name: 'commons-codec', version: '1.10'))
+        assertNoProjectDependencies(eclipseProject4)
 
         cleanup:
         project1Connection?.close()
@@ -214,12 +225,16 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         assertProjectInWorkspace(eclipseWorkspace, 'multi-project-2')
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'sub-a')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
         EclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'sub-b')
         assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'log4j', name: 'log4j', version: '1.2.17'))
+        assertNoProjectDependencies(eclipseProject2)
         EclipseProject eclipseProject3 = assertProjectInWorkspace(eclipseWorkspace, 'sub-1')
         assertExternalDependencies(eclipseProject3, new ExternalDependency(group: 'commons-math', name: 'commons-math', version: '1.2'))
+        assertNoProjectDependencies(eclipseProject3)
         EclipseProject eclipseProject4 = assertProjectInWorkspace(eclipseWorkspace, 'sub-2')
         assertExternalDependencies(eclipseProject4, new ExternalDependency(group: 'commons-codec', name: 'commons-codec', version: '1.10'))
+        assertNoProjectDependencies(eclipseProject4)
 
         cleanup:
         project1Connection?.close()
@@ -312,6 +327,7 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         eclipseWorkspace.openProjects.size() == 2
         EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'project1')
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
+        assertNoProjectDependencies(eclipseProject1)
         SubstitutedEclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'project2')
         eclipseProject2.substitutedExternalDependencies.size() == 1
         assert eclipseProject2.substitutedExternalDependencies.find {
@@ -397,20 +413,6 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         externalDependencies.each { externalDependency ->
             assert eclipseProject.classpath.collect { it.gradleModuleVersion }.find {
                 it.group == externalDependency.group && it.name == externalDependency.name && it.version == externalDependency.version
-            }
-        }
-    }
-
-    private void assertNoExternalDependencies(EclipseProject eclipseProject) {
-        assert eclipseProject.classpath.size() == 0
-    }
-
-    private void assertProjectDependencies(EclipseProject eclipseProject, String... projectPaths) {
-        assert eclipseProject.projectDependencies.size() == projectPaths.size()
-
-        projectPaths.each { projectPath ->
-            assert eclipseProject.projectDependencies.collect { it.path }.find {
-                it == projectPath
             }
         }
     }
