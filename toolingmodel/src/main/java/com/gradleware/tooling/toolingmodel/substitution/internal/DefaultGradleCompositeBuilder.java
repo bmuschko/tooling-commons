@@ -32,8 +32,12 @@ public class DefaultGradleCompositeBuilder extends GradleCompositeBuilder {
 
     @Override
     public GradleCompositeBuild build() {
+        if (participants.isEmpty()) {
+            throw new IllegalStateException("A composite build requires at least one participating project.");
+        }
+
         ConnectionParameters connectionParameters = connectionParamsBuilder.build();
-        Distribution distribution = distributionFactory.getDefaultDistribution(connectionParameters.getProjectDir(), connectionParameters.isSearchUpwards() != null ? connectionParameters.isSearchUpwards() : true);
+        Distribution distribution = distributionFactory.getClasspathDistribution();
         GradleCompositeFactory gradleCompositeFactory = new GradleCompositeFactory(toolingImplementationLoader, executorFactory, loggingProvider, participants);
         return gradleCompositeFactory.create(distribution, connectionParameters);
     }

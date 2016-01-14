@@ -14,6 +14,15 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
     @Rule
     TestDirectoryProvider directoryProvider = new TestDirectoryProvider()
 
+    def "cannot create composite with no participating projects"() {
+        when:
+        GradleCompositeBuilder.newComposite().build()
+
+        then:
+        Throwable t = thrown(IllegalStateException)
+        t.message == "A composite build requires at least one participating project."
+    }
+
     def "cannot request model that is not an interface"() {
         given:
         File project1 = directoryProvider.createDir('project-1')
@@ -218,6 +227,33 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         project2Connection?.close()
     }
 
+    @NotYetImplemented
+    def "can substitute external dependency with project dependency"() {
+        given:
+        File projectDir1 = directoryProvider.createDir('project-1')
+        File buildFile1 = createBuildFileWithDependency(projectDir1, 'commons-lang:commons-lang:2.6')
+        buildFile1 << """
+            group = 'org.gradle'
+            version = '1.0'
+        """
+        File projectDir2 = directoryProvider.createDir('project-2')
+        File buildFile2 = createBuildFile(projectDir2)
+        buildFile2 << javaBuildScript()
+        buildFile2 << """
+            dependencies {
+                compile 'org.gradle:project-1:1.0'
+            }
+        """
+
+        when:
+        ProjectConnection project1Connection = createProjectConnection(projectDir1)
+        ProjectConnection project2Connection = createProjectConnection(projectDir2)
+        GradleCompositeBuild gradleCompositeBuild = createCompositeBuild(project1Connection, project2Connection)
+        EclipseWorkspace eclipseWorkspace = gradleCompositeBuild.getModel(EclipseWorkspace)
+
+        then:
+        eclipseWorkspace.openProjects.size() == 2
+    }
 
     private ProjectConnection createProjectConnection(File projectDir) {
         GradleConnector.newConnector().forProjectDirectory(projectDir).connect()
@@ -233,29 +269,40 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         compositeBuilder.build()
     }
 
-    private void createBuildFileWithDependency(File projectDir, String coordinates) {
+    private File createBuildFileWithDependency(File projectDir, String coordinates) {
+        File buildFile = createBuildFile(projectDir)
+        buildFile << javaBuildScript()
+        buildFile << """
+            dependencies {
+                compile '$coordinates'
+            }
+        """
+        buildFile
+    }
+
+    private File createBuildFile(File projectDir) {
         createDir(projectDir)
         File buildFile = new File(projectDir, 'build.gradle')
         createFile(buildFile)
+        buildFile
+    }
 
-        buildFile << """
+    private String javaBuildScript() {
+        """
             apply plugin: 'java'
 
             repositories {
                 mavenCentral()
             }
-
-            dependencies {
-                compile '$coordinates'
-            }
         """
     }
 
-    private void createSettingsFile(File projectDir, List<String> projectPaths) {
+    private File createSettingsFile(File projectDir, List<String> projectPaths) {
         File settingsFile = new File(projectDir, 'settings.gradle')
         createFile(settingsFile)
         String includes = projectPaths.collect { "'$it'" }.join(', ')
         settingsFile << "include $includes"
+        settingsFile
     }
 
     private void createDir(File dir) {
