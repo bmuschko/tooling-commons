@@ -81,7 +81,7 @@ public class EclipseWorkspaceModelBuilder<T> extends AbstractLongRunningOperatio
     }
 
     /**
-     * Returns the set of projects found on any level of the hierarchy. Excludes the root project.
+     * Returns the set of projects found on any level of the hierarchy including the root project.
      *
      * @return set of projects
      */
@@ -90,6 +90,7 @@ public class EclipseWorkspaceModelBuilder<T> extends AbstractLongRunningOperatio
 
         for (ProjectConnection participant : participants) {
             EclipseProject rootProject = determineRootProject(participant.getModel(EclipseProject.class));
+            collectedProjects.add(rootProject);
             DomainObjectSet<? extends EclipseProject> children = rootProject.getChildren();
 
             if (!children.isEmpty()) {
