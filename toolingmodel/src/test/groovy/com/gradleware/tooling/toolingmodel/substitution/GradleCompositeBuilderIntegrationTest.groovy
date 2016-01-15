@@ -292,14 +292,14 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         project2Connection?.close()
     }
 
-    def "can substitute external dependency with project dependency"() {
+    def "can substitute external dependency with project dependency for composite with two single project builds"() {
         given:
-        File projectDir1 = directoryProvider.createDir('project1')
-        createBuildFileWithDependency(projectDir1, 'commons-lang:commons-lang:2.6')
-
         File repoDir = directoryProvider.createDir('repo')
         File localArtifactDir = directoryProvider.createDir('repo/org/gradle/project1/1.0')
         createJarFile(new File(localArtifactDir, 'project1-1.0.jar'))
+
+        File projectDir1 = directoryProvider.createDir('project1')
+        createBuildFileWithDependency(projectDir1, 'commons-lang:commons-lang:2.6')
 
         File projectDir2 = directoryProvider.createDir('project2')
         File buildFile2 = createBuildFile(projectDir2)
@@ -329,6 +329,8 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-lang', name: 'commons-lang', version: '2.6'))
         assertNoProjectDependencies(eclipseProject1)
         SubstitutedEclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'project2')
+        assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'org.gradle', name: 'project1', version: '1.0'))
+        assertNoProjectDependencies(eclipseProject2)
         eclipseProject2.substitutedExternalDependencies.size() == 1
         assert eclipseProject2.substitutedExternalDependencies.find {
             it.gradleModuleVersion.group == 'org.gradle' && it.gradleModuleVersion.name == 'project1' && it.gradleModuleVersion.version == '1.0'
@@ -336,6 +338,63 @@ class GradleCompositeBuilderIntegrationTest extends Specification {
         eclipseProject2.substitutedProjectDependencies.size() == 1
         assert eclipseProject2.substitutedProjectDependencies.find {
             it.path == ':project1'
+        }
+    }
+
+    def "can substitute external dependency with project dependency for composite with deeply nested multi-project build"() {
+        given:
+        File projectDir1 = directoryProvider.createDir('project1')
+        File subProject1 = new File(projectDir1, 'sub1')
+        File subProject2 = new File(projectDir1, 'sub2')
+        File subSubProject1 = new File(subProject1, 'subsub1')
+        File subSubProject2 = new File(subProject2, 'subsub2')
+        createBuildFileWithDependency(subProject1, 'commons-lang:commons-lang:2.6')
+        createBuildFileWithDependency(subProject2, 'log4j:log4j:1.2.17')
+        createBuildFileWithDependency(subSubProject1, 'commons-math:commons-math:1.2')
+        createBuildFileWithDependency(subSubProject2, 'commons-codec:commons-codec:1.10')
+        createSettingsFile(projectDir1, ['sub1', 'sub2', 'sub1:subsub1', 'sub2:subsub2'])
+
+        File repoDir = directoryProvider.createDir('repo')
+        File localArtifactDir = directoryProvider.createDir('repo/org/gradle/subsub2/1.0')
+        createJarFile(new File(localArtifactDir, 'subsub2-1.0.jar'))
+
+        File projectDir2 = directoryProvider.createDir('project2')
+        File buildFile2 = createBuildFile(projectDir2)
+        buildFile2 << javaBuildScript()
+        buildFile2 << """
+            repositories {
+                maven {
+                    // Artifact needs to be resolvable
+                    url 'file://$repoDir.absolutePath'
+                }
+            }
+
+            dependencies {
+                compile 'org.gradle:subsub2:1.0'
+            }
+        """
+
+        when:
+        ProjectConnection project1Connection = createProjectConnection(projectDir1)
+        ProjectConnection project2Connection = createProjectConnection(projectDir2)
+        GradleCompositeBuild gradleCompositeBuild = createCompositeBuild(project1Connection, project2Connection)
+        EclipseWorkspace eclipseWorkspace = gradleCompositeBuild.getModel(EclipseWorkspace)
+
+        then:
+        eclipseWorkspace.openProjects.size() == 6
+        EclipseProject eclipseProject1 = assertProjectInWorkspace(eclipseWorkspace, 'subsub2')
+        assertExternalDependencies(eclipseProject1, new ExternalDependency(group: 'commons-codec', name: 'commons-codec', version: '1.10'))
+        assertNoProjectDependencies(eclipseProject1)
+        SubstitutedEclipseProject eclipseProject2 = assertProjectInWorkspace(eclipseWorkspace, 'project2')
+        assertExternalDependencies(eclipseProject2, new ExternalDependency(group: 'org.gradle', name: 'subsub2', version: '1.0'))
+        assertNoProjectDependencies(eclipseProject2)
+        eclipseProject2.substitutedExternalDependencies.size() == 1
+        assert eclipseProject2.substitutedExternalDependencies.find {
+            it.gradleModuleVersion.group == 'org.gradle' && it.gradleModuleVersion.name == 'subsub2' && it.gradleModuleVersion.version == '1.0'
+        }
+        eclipseProject2.substitutedProjectDependencies.size() == 1
+        assert eclipseProject2.substitutedProjectDependencies.find {
+            it.path == ':subsub2'
         }
     }
 
